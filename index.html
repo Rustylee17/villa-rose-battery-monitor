@@ -1,1 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
 
+<title>Villa Rose Battery Health Monitor</title>
+
+<style>
+
+body {
+  background: #111;
+  color: white;
+  font-family: Arial;
+  padding: 20px;
+}
+
+.card {
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px;
+}
+
+h1 {
+  color: #00ff88;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Villa Rose Battery Health Monitor</h1>
+
+<div id="data"></div>
+
+<script>
+
+async function loadData() {
+
+  const response = await fetch("battery_latest.json");
+
+  const data = await response.json();
+
+  let html = "";
+
+  data.forEach(battery => {
+
+    html += `
+      <div class="card">
+
+        <h2>${battery.name}</h2>
+
+        <p>Voltage: ${battery.voltage} V</p>
+
+        <p>SOC: ${battery.soc}%</p>
+
+        <p>SOH: ${battery.soh}%</p>
+
+        <p>Status: ${battery.status}</p>
+
+      </div>
+    `;
+  });
+
+  document.getElementById("data").innerHTML = html;
+}
+
+loadData();
+
+setInterval(loadData, 30000);
+
+</script>
+
+</body>
+</html>
