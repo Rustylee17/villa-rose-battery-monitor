@@ -1,1 +1,9 @@
-
+[
+  {
+    "name": "11_1 Ampace",
+    "voltage": 677.6,
+    "soc": 39.9,
+    "soh": 100,
+    "status": "OK"
+  }
+]
