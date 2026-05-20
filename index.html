@@ -1,291 +1,83 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
   <title>Villa Rose Battery Monitor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    :root {
-      --bg: #071014;
-      --panel: #101b21;
-      --panel2: #0b151a;
-      --text: #f4f7fb;
-      --muted: #9fb2c3;
-      --green: #38e05d;
-      --yellow: #f5c542;
-      --red: #ff3b3b;
-      --blue: #1499ff;
-    }
-    * { box-sizing: border-box; }
+
     body {
-      margin: 0;
-      font-family: Segoe UI, Arial, sans-serif;
-      background: radial-gradient(circle at top left, #102832, #050809 50%, #030506);
-      color: var(--text);
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 22px 28px;
-      border-bottom: 1px solid #1f3038;
-      background: rgba(5, 10, 12, 0.84);
-    }
-    h1 { margin: 0; font-size: 34px; letter-spacing: .5px; }
-    .run { color: var(--green); font-weight: 700; }
-    .wrap { padding: 22px; }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-    .summary-card, .battery-card, .chart-card {
-      background: linear-gradient(145deg, rgba(20,30,36,.95), rgba(8,14,17,.95));
-      border: 1px solid #22343c;
-      border-radius: 16px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.25);
-    }
-    .summary-card {
+      background: #081015;
+      color: white;
+      font-family: Arial;
       padding: 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-height: 92px;
     }
-    .summary-card .num { font-size: 28px; font-weight: 800; }
-    .summary-card .label { color: var(--muted); font-weight: 700; }
-    .ok-border { border-color: rgba(56,224,93,.55); }
-    .warn-border { border-color: rgba(245,197,66,.55); }
-    .bad-border { border-color: rgba(255,59,59,.7); }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(210px, 1fr));
-      gap: 14px;
-      margin-bottom: 16px;
+
+    h1 {
+      color: #55ff88;
     }
-    .battery-card { overflow: hidden; border-color: var(--card-color); }
-    .card-head {
-      padding: 14px;
-      background: linear-gradient(90deg, color-mix(in srgb, var(--card-color) 45%, transparent), transparent);
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
+
+    .card {
+      background: #13202a;
+      border: 1px solid #2e4452;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
     }
-    .name { font-weight: 800; font-size: 18px; }
-    .ip { color: #d5e2ea; margin-top: 3px; }
-    .badge {
-      font-size: 12px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-weight: 800;
-      align-self: start;
+
+    .ok {
+      border-left: 8px solid #33cc66;
     }
-    .badge.ok { background: rgba(56,224,93,.85); color: white; }
-    .badge.stale { background: rgba(245,197,66,.9); color: #1b1400; }
-    .badge.offline { background: rgba(255,59,59,.85); color: white; }
-    .gauge {
-      width: 170px; height: 92px;
-      margin: 18px auto 8px;
-      position: relative;
-      overflow: hidden;
+
+    .offline {
+      border-left: 8px solid #ff4444;
     }
-    .gauge svg { width: 170px; height: 92px; }
-    .gauge .value {
-      position: absolute;
-      left: 0; right: 0; bottom: 6px;
-      text-align: center;
-      font-size: 34px;
-      font-weight: 900;
-    }
-    .soc-label { text-align: center; margin-bottom: 13px; color: #dce7ef; font-weight: 700; }
-    .metric {
-      display: flex;
-      justify-content: space-between;
-      margin: 8px 13px;
-      padding: 11px 12px;
-      background: rgba(255,255,255,.045);
-      border: 1px solid rgba(255,255,255,.05);
-      border-radius: 9px;
-      font-size: 15px;
-    }
-    .metric span:first-child { color: #cfe0ea; }
-    .metric span:last-child { font-weight: 800; }
-    .error { color: #ffb2b2; font-size: 12px; margin: 10px 14px 14px; min-height: 16px; }
-    .charts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    .chart-card { padding: 18px; min-height: 310px; }
-    .chart-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
-    .footer {
-      color: var(--muted);
-      padding: 12px 4px 0;
-      font-size: 13px;
-    }
-    @media (max-width: 1300px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      .summary { grid-template-columns: repeat(2, 1fr); }
-      .charts { grid-template-columns: 1fr; }
-    }
+
   </style>
 </head>
+
 <body>
-  <header>
-    <div>
-      <h1>🔋 Battery Monitor</h1>
-    </div>
-    <div style="text-align:right">
-      <div class="run">● Running</div>
-      <div id="lastUpdate">Last update: --</div>
-    </div>
-  </header>
 
-  <div class="wrap">
-    <section class="summary">
-      <div class="summary-card"><div class="num" id="totalCount">5</div><div><div class="label">TOTAL SYSTEMS</div></div></div>
-      <div class="summary-card ok-border"><div class="num" id="onlineCount">0</div><div><div class="label">ONLINE</div></div></div>
-      <div class="summary-card warn-border"><div class="num" id="staleCount">0</div><div><div class="label">STALE</div></div></div>
-      <div class="summary-card bad-border"><div class="num" id="offlineCount">0</div><div><div class="label">OFFLINE</div></div></div>
-    </section>
+<h1>Villa Rose Battery Monitor</h1>
 
-    <section class="grid" id="cards"></section>
-
-    <section class="charts">
-      <div class="chart-card">
-        <div class="chart-title">SOC Trend</div>
-        <canvas id="socChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Voltage Trend</div>
-        <canvas id="voltChart"></canvas>
-      </div>
-    </section>
-
-    <div class="footer" id="logFile">Log file: --</div>
-  </div>
+<div id="cards"></div>
 
 <script>
-let socChart;
-let voltChart;
 
-function fmt(value, suffix="", decimals=1) {
-  if (value === null || value === undefined || value === "") return "--";
-  return Number(value).toFixed(decimals) + suffix;
-}
+async function loadData() {
 
-function gaugeSvg(value, color) {
-  const pct = value === null || value === undefined ? 0 : Math.max(0, Math.min(100, Number(value)));
-  const radius = 70;
-  const circumference = Math.PI * radius;
-  const dash = circumference * pct / 100;
-  return `
-    <svg viewBox="0 0 170 92">
-      <path d="M 15 82 A 70 70 0 0 1 155 82" stroke="rgba(255,255,255,.12)" stroke-width="16" fill="none" stroke-linecap="butt"/>
-      <path d="M 15 82 A 70 70 0 0 1 155 82" stroke="${color}" stroke-width="16" fill="none"
-            stroke-dasharray="${dash} ${circumference}" stroke-linecap="butt"/>
-    </svg>
-    <div class="value">${value === null || value === undefined ? "--" : Math.round(value) + "%"}</div>
-  `;
-}
+  const response = await fetch("battery_latest.json");
 
-function renderCards(devices) {
-  const cards = document.getElementById("cards");
-  cards.innerHTML = "";
-  for (const d of devices) {
-    const statusClass = d.status === "OK" ? "ok" : d.status === "STALE" ? "stale" : "offline";
-    const card = document.createElement("div");
-    card.className = "battery-card";
-    card.style.setProperty("--card-color", d.color);
-    card.innerHTML = `
-      <div class="card-head">
-        <div>
-          <div class="name">${d.name}</div>
-          <div class="ip">${d.ip}</div>
-        </div>
-        <div class="badge ${statusClass}">${d.status}</div>
+  const batteries = await response.json();
+
+  let html = "";
+
+  batteries.forEach(b => {
+
+    html += `
+      <div class="card ${b.status == "OK" ? "ok" : "offline"}">
+
+        <h2>${b.name}</h2>
+
+        <p><b>Voltage:</b> ${b.voltage} V</p>
+
+        <p><b>SOC:</b> ${b.soc}%</p>
+
+        <p><b>SOH:</b> ${b.soh}%</p>
+
+        <p><b>Status:</b> ${b.status}</p>
+
       </div>
-      <div class="gauge">${gaugeSvg(d.soc, d.color)}</div>
-      <div class="soc-label">SOC</div>
-      <div class="metric"><span>Voltage</span><span>${fmt(d.voltage, " V", 1)}</span></div>
-      <div class="metric"><span>SOC</span><span>${fmt(d.soc, "%", 1)}</span></div>
-      <div class="metric"><span>SOH</span><span>${fmt(d.soh, "%", 1)}</span></div>
-      <div class="error">${d.error || ""}</div>
     `;
-    cards.appendChild(card);
-  }
-}
-
-function buildDatasets(history, key, devices) {
-  return devices.map(d => {
-    const points = history.filter(x => x.name === d.name && x[key] !== null && x[key] !== undefined)
-      .slice(-60)
-      .map(x => ({x: x.timestamp.slice(11, 19), y: x[key]}));
-    return {
-      label: d.name,
-      data: points,
-      borderColor: d.color,
-      backgroundColor: d.color,
-      tension: .25,
-      borderWidth: 2,
-      pointRadius: 0
-    };
   });
+
+  document.getElementById("cards").innerHTML = html;
 }
 
-function makeChart(ctx, title, datasets) {
-  return new Chart(ctx, {
-    type: "line",
-    data: { datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      parsing: false,
-      plugins: { legend: { labels: { color: "#cfe0ea" } } },
-      scales: {
-        x: { type: "category", ticks: { color: "#9fb2c3", maxTicksLimit: 8 }, grid: { color: "rgba(255,255,255,.08)" } },
-        y: { ticks: { color: "#9fb2c3" }, grid: { color: "rgba(255,255,255,.08)" } }
-      }
-    }
-  });
-}
+loadData();
 
-function updateCharts(history, devices) {
-  const socDatasets = buildDatasets(history, "soc", devices);
-  const voltDatasets = buildDatasets(history, "voltage", devices);
+setInterval(loadData, 30000);
 
-  if (!socChart) {
-    socChart = makeChart(document.getElementById("socChart"), "SOC", socDatasets);
-    voltChart = makeChart(document.getElementById("voltChart"), "Voltage", voltDatasets);
-  } else {
-    socChart.data.datasets = socDatasets;
-    voltChart.data.datasets = voltDatasets;
-    socChart.update("none");
-    voltChart.update("none");
-  }
-}
-
-async function refresh() {
-  const res = await fetch("/api/status");
-  const data = await res.json();
-
-  const devices = data.devices;
-  renderCards(devices);
-  updateCharts(data.history, devices);
-
-  document.getElementById("totalCount").textContent = devices.length;
-  document.getElementById("onlineCount").textContent = devices.filter(d => d.status === "OK").length;
-  document.getElementById("staleCount").textContent = devices.filter(d => d.status === "STALE").length;
-  document.getElementById("offlineCount").textContent = devices.filter(d => d.status === "OFFLINE").length;
-  document.getElementById("lastUpdate").textContent = "Last update: " + data.server_time;
-  document.getElementById("logFile").textContent = "Log file: " + data.log_file;
-}
-
-refresh();
-setInterval(refresh, 3000);
 </script>
+
 </body>
 </html>
-
